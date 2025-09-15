@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RawEvent {
+      id        String   @id @default(cuid())
+      createdAt DateTime @default(now())
+      type      String   // e.g., "pageview", "click"
+      eventName String   // e.g., "/", "/about", "signup-button"
+      payload   Json?    // Optional: for storing extra data
+}
+
+model AggregatedStats {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date // Store only the date part, e.g., 2025-09-13
+  eventName String   // e.g., "/about-us"
+  count     Int      @default(1)
+
+  // A unique constraint to ensure we only have one entry
+  // per event per day.
+  @@unique([date, eventName])
+}

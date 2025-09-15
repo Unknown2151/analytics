@@ -1,0 +1,26 @@
+version: '3.8'
+
+# Define the services (containers) our application will use
+services:
+  # This is our PostgreSQL database service, we'll name it 'db'
+  db:
+    # Use the official PostgreSQL image from Docker Hub, version 15
+    image: postgres:15
+    # Always restart the container if it stops, unless we stop it manually
+    restart: always
+    # Set the required environment variables for the database
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    # Map a port from our computer (5432) to the container's port (5432)
+    ports:
+      - '5432:5432'
+    # Persist the database data on our local machine in a "volume"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Define the named volume we referenced above
+volumes:
+  postgres_data:
+
