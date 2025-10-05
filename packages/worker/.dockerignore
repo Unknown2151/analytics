@@ -1,0 +1,8 @@
+# Ignore dependencies, as we will install them inside the container
+node_modules
+
+# Ignore environment files, as we will provide them separately
+.env
+
+# Ignore Docker files themselves
+Dockerfile

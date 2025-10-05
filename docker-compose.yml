@@ -1,26 +1,56 @@
-version: '3.8'
-
-# Define the services (containers) our application will use
 services:
-  # This is our PostgreSQL database service, we'll name it 'db'
   db:
-    # Use the official PostgreSQL image from Docker Hub, version 15
     image: postgres:15
-    # Always restart the container if it stops, unless we stop it manually
     restart: always
-    # Set the required environment variables for the database
     environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: mydatabase
-    # Map a port from our computer (5432) to the container's port (5432)
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - '5432:5432'
-    # Persist the database data on our local machine in a "volume"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-# Define the named volume we referenced above
+  api:
+    build: ./packages/tracker-api
+    container_name: api
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build: ./packages/worker
+    container_name: worker
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  dashboard:
+    build: ./packages/dashboard
+    container_name: dashboard
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+
 volumes:
   postgres_data:
-
